@@ -2,8 +2,6 @@
 #include <QDebug>
 
 
-
-
 void Simulation::loadMap(QString mapName)
 {
     QString path = "../micromouse/maps/";
@@ -15,6 +13,17 @@ void Simulation::loadMap(QString mapName)
     {
         qDebug() <<"BLAD ODCZYTU MAPY" <<endl;
     }
+    while(wall_G_List.size() != 0)
+    {
+        delete  wall_G_List[0];
+        wall_G_List.removeAt(0);
+    }
+    while (wall_List.size() != 0)
+    {
+        delete wall_List[0];
+        wall_List.removeAt(0);
+    }
+//        scene->;
     int pom;
     int position_x = 40;
     int position_y = 40;
@@ -60,27 +69,88 @@ void Simulation::loadMap(QString mapName)
     }
 }
 
+void Simulation::makeFileList()
+{
+    int i = 0;
+    QString temp;
+    QList<QString> temp_list;
+    struct dirent * file;
+    DIR * path;
+    if((path = opendir("../micromouse/maps/")))
+    {
+
+       while((file = readdir(path)))
+       {
+           puts(file->d_name);
+           for(int i = 0; i < file->d_namlen; i++){
+               temp+=file->d_name[i];
+           }
+           temp_list.append(temp);
+           temp.clear();
+       }
+       closedir(path);
+    }
+    while(i != temp_list.size())
+    {
+        for(i = 0; i < temp_list.size(); i++)
+        {
+            if(temp_list.at(i).size()<6)
+            {
+                temp_list.removeAt(i);
+                break;
+            }
+        }
+    }
+    int k;
+    for(int j = 0; j < temp_list.size(); j++)
+    {
+        k = temp_list.at(j).length();
+        temp = temp_list.at(j);
+        temp.remove(k-4,k-1);
+        fileList.append(temp);
+    }
+}
+
 Simulation::Simulation()
 {
     window_w=900;
     window_h=700;
     scene=new QGraphicsScene();
     scene->setSceneRect(0,0,window_w,window_h);
-
+    makeFileList();
     gview = new QGraphicsView(scene);
     gview->setScene(scene);
     gview->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     gview->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     gview->setFixedSize(window_w,window_h);
-    loadMap("map1");
+    gview->setWindowTitle("MICROMOUSE SIMULATOR");
     start = addButton(720, 100, "START");
-//    connect(start, SIGNAL(clicked()), this, SLOT(start));    // naprawic connect
-    connect(start,SIGNAL(clicked()),this,SLOT(startClicked()));
-    stop = addButton(720, 170, "STOP");
-    connect(stop,SIGNAL(clicked()),this,SLOT(resetClicked()));
-//    addComboBox(750, 240, comboBox);
+    connect(start, SIGNAL(clicked()), this, SLOT(startClicked()));
 
-    robot = new Robot (60, 660, 1, this);
+    stop = addButton(720, 170, "STOP");
+    connect(stop, SIGNAL(clicked()), this, SLOT(stopClicked()));
+
+    mapComboBox = addComboBox(720, 370);
+    mapComboBox->addItems(fileList);
+    connect(mapComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+        [=]{ chooseMap();});
+
+    reset = addButton(720, 240, "RESET");
+    connect(reset, SIGNAL(clicked()), this, SLOT(resetClicked()));
+
+    algorithmComboBox = addComboBox(720, mapComboBox->y() + 50);
+    QList<QString > algorithmList{"Propagacja fali", "Śledzenie ściany", "Losowe"};
+    algorithmComboBox->addItems(algorithmList);
+    connect(algorithmComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+        [=]{ chooseAlgorithm();});
+
+    mapLabel = new QLabel("MAPA:", gview);
+    mapLabel->setGeometry(720, mapComboBox->y() - 20, 150, 20);
+    algorithmLabel = new QLabel("ALGORYTM:", gview);
+    algorithmLabel->setGeometry(720, algorithmComboBox->y() - 20, 150, 20);
+
+    loadMap(mapComboBox->currentText());
+    robot = new Robot (16, 1, 1, this);
     robot_g = new Robot_G(robot, getScene());
     scene->addItem(robot_g);
     robot_g->draw();
@@ -96,10 +166,12 @@ QPushButton *Simulation::addButton(int _x, int _y, QString _name)
     return button;
 }
 
-void Simulation::addComboBox(int _x, int _y, QComboBox *comboBox)
+QComboBox *Simulation::addComboBox(int _x, int _y)
 {
+    QComboBox* comboBox;
     comboBox = new QComboBox(gview);
-    comboBox->setGeometry(_x, _y, 100, 50);
+    comboBox->setGeometry(_x, _y, 150, 20);
+    return comboBox;
 }
 
 Simulation::~Simulation()
@@ -139,13 +211,46 @@ void Simulation::startClicked()
     timer->start(100);
 }
 
-void Simulation::resetClicked()
+void Simulation::stopClicked()
 {
     timer->stop();
 }
 
+void Simulation::resetClicked()
+{
+    timer->stop();
+    robot->reset();
+    robot_g->draw();
+}
+
 void Simulation::update()
 {
-    robot->maping();
+    if(algorithmComboBox->currentIndex() == SPILLING_WATER)
+    {
+        robot->maping();
+    }
+    else if (algorithmComboBox->currentIndex() == WALL_FOLLOWER)
+    {
+        robot->wallFollower();
+    }
+    else if (algorithmComboBox->currentIndex() == BRUTE_FORCE)
+    {
+        robot->bruteForce();
+    }
+    robot_g->draw();
+}
+
+void Simulation::chooseMap()
+{
+    timer->stop();
+    robot->reset();
+    robot_g->draw();
+    loadMap(mapComboBox->currentText());
+}
+
+void Simulation::chooseAlgorithm()
+{
+    timer->stop();
+    robot->reset();
     robot_g->draw();
 }

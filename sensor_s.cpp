@@ -8,11 +8,13 @@ Sensor_S::Sensor_S(int _range, QString _name, Robot *_robot)
     robot = _robot;
 }
 
-bool Sensor_S::checkSensor(QList<Wall *> walls)
+bool Sensor_S::checkSensor()
 {
+    QList<Wall* > walls;
     int x = robot->getX();
     int y = robot->getY();
     direction = robot->getDirection();
+    walls = robot->getRobotWallList();
     for (int i = 0; i < walls.size(); i++)
     {
         if(name == "right")

@@ -8,11 +8,13 @@ Sensor_F::Sensor_F(int _range, Robot *_robot)
     robot = _robot;
 }
 
-bool Sensor_F::checkSensor(QList<Wall *> walls)
+bool Sensor_F::checkSensor()
 {
+    QList<Wall* > walls;
     int x = robot->getX();
     int y = robot->getY();
     direction = robot->getDirection();
+    walls = robot->getRobotWallList();
     for (int i = 0; i < walls.size(); i++)
     {
         if(direction == 1 && walls[i]->getOrientation() == true

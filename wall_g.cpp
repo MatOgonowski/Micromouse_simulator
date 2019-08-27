@@ -20,3 +20,9 @@ Wall_G::Wall_G(Wall *_wall, QGraphicsScene *_sim)
     pen.setWidth(3);
     line->setPen(pen);
 }
+
+Wall_G::~Wall_G()
+{
+    sim->removeItem(line);
+}
+

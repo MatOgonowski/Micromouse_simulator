@@ -16,7 +16,7 @@ private:
     uint8_t direction;
 public:
     Sensor_S(int _range, QString _name, Robot* _robot);
-    bool checkSensor(QList<Wall* > walls);
+    bool checkSensor();
 };
 
 #endif // SENSORS_H

@@ -3,9 +3,13 @@
 
 #include <cstdint>
 #include <QList>
+#include <cstdlib>
+#include <ctime>
 #include "wall.h"
 #include "sensor_f.h"
 #include "sensor_s.h"
+
+// ZROBIC PORUSZANIE BRUTAL FORCE
 
 
 struct north{
@@ -59,9 +63,8 @@ private:
     uint8_t direction;
     uint8_t wall_map[18][18];
     int map[18][18];
-    int position[2];
-    int path[256];
-    int distance, distance_temp;
+    int currentPosition[2];
+    int startPosition[2];
     QList<Wall* > walls_list;
     Sensor_F* sensor_f;
     Sensor_S* sensor_r;
@@ -72,18 +75,31 @@ private:
     void spillWater();
     void resetMap(int type);
     void scanSector();
-    void turn(uint8_t new_direction);
-    void findPath();
     uint8_t choiceDirection();
     int highestNeighbourSector(int i, int j);
+    void move();
+    void turnRight();
+    void turnLeft();
+    void turnBack();
+    template <typename T> void scanSector2()
+    {
+        T temp;
+        temp.front = sensor_f->checkSensor();
+        temp.left = sensor_l->checkSensor();
+        temp.right = sensor_r->checkSensor();
+        wall_map[currentPosition[0]][currentPosition[1]] = *(uint8_t*)&temp | wall_map[currentPosition[0]][currentPosition[1]];
+    }
 
 public:
-    Robot(int _x, int _y, uint8_t _direction, Simulation* _sim);
+    Robot(int _p1, int _p2, uint8_t _direction, Simulation* _sim);
     int getX() const {return x;}
     int getY() const {return y;}
     uint8_t getDirection() const {return direction;}
-    void move();
     void maping();
+    void reset();
+    QList<Wall* > getRobotWallList() const {return walls_list;}
+    void wallFollower();
+    void bruteForce();
 
 };
 

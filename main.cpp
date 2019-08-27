@@ -7,6 +7,5 @@ int main(int argc, char *argv[])
     Simulation *simulation;
     simulation = new Simulation();
     simulation->show();
-
     return a.exec();
 }

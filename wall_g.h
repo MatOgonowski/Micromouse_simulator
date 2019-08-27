@@ -18,6 +18,7 @@ private:
     int gy;
 public:
     Wall_G(Wall* _wall, QGraphicsScene* _sim);
+    ~Wall_G();
 };
 
 #endif // WALLG_H
